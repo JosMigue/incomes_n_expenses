@@ -1,39 +1,162 @@
 'use client'
 import { useState, useTransition } from "react";
-import { handleLogin } from '@/app/actions/login'
+import { handleLogin } from '@/app/actions/signin'
+import { signUpHandler } from "@/app/actions/signup";
 import { auth } from "@/app/lib/db/auth";
 import { redirect } from "next/navigation"
 import { error } from "console";
 const Page = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignedInSuccessfully, setisSingedSuccessFully] = useState(false);
+  const [name, setName] = useState("");
+  const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [tab, setTab] = useState("signin");
   const handleSingIn = async () => {
     setErrorMessage("");
     startTransition(async () => {
       const status = await handleLogin(email, password);
       if (status.success) {
-        setisSingedSuccessFully(true);
+        setSuccessMessage(status.message);
         setTimeout(() => {
           redirect("/dashboard");
         }, 2000);
       } else {
         console.log(status)
         if (status.err?.name === "CredentialsSignin") {
-          setisSingedSuccessFully(false);
+          setSuccessMessage('');
           setErrorMessage("Invalid email or password. Please try again.");
         }
       }
     });
   };
+  const handleSignUp = async () => {
+    setErrorMessage("");
+    startTransition(async () => {
+      const status = await signUpHandler(name, email, password);
+      if (status.success) {
+        setSuccessMessage(status.message);
+        setTimeout(() => {
+          redirect("/dashboard");
+        }, 2000);
+      } else {
+        setSuccessMessage('');
+        setErrorMessage(status.message || "An error occurred during registration. Please try again.");
+      }
+    });
+  };
   return (
     <>
-      <div className="min-h-screen bg-neutral-900 flex items-center justify-center p-6">
-        <div className="w-full max-w-5xl bg-neutral-800 rounded-2xl shadow-xl grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+      {/* AUTH CARD */}
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 font-mono relative overflow-x-hidden flex items-center justify-center p-6">
 
-          {/* LEFT SIDE */}
+        {/* Glow blobs */}
+        <div className="fixed top-0 right-0 w-96 h-96 bg-lime-400 opacity-5 rounded-full blur-3xl pointer-events-none" />
+        <div className="fixed bottom-20 left-0 w-80 h-80 bg-emerald-400 opacity-5 rounded-full blur-3xl pointer-events-none" />
+        <section className="relative z-10 max-w-4xl mx-auto ">
+          {successMessage && (
+            <div className="bg-green-500 text-white p-3 rounded mb-6">
+              {successMessage}
+            </div>
+          )}
+          {errorMessage && (
+            <div className="bg-red-500 text-white p-3 rounded mb-6">
+              {errorMessage}
+            </div>
+          )}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden grid md:grid-cols-2">
+
+            {/* Left */}
+            <div className="p-10 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col justify-center">
+              <h2 className="font-serif text-3xl leading-tight mb-3">
+                {tab === "signin" ? <>Welcome<br /><em className="text-emerald-400 not-italic">back.</em></> : <>Start your<br /><em className="text-lime-400 not-italic">journey.</em></>}
+              </h2>
+              <p className="text-xs text-zinc-600 leading-relaxed">
+                {tab === "signin"
+                  ? "Sign in to access your personal finance dashboard."
+                  : "Create a free account and take control of your finances today."}
+              </p>
+
+              <div className="mt-8 space-y-3 text-xs text-zinc-700">
+                {["Track incomes & expenses", "Secure credential login", "Full CRUD control"].map((item) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <span className="text-lime-400">✓</span> {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — form */}
+            <div className="p-10">
+              {/* Tab switcher */}
+              <div className="flex bg-zinc-950 rounded-lg p-1 mb-6">
+                {["signin", "signup"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`flex-1 text-xs py-2 rounded-md transition-all capitalize ${tab === t
+                      ? "bg-zinc-800 text-zinc-100"
+                      : "text-zinc-600 hover:text-zinc-400"
+                      }`}
+                  >
+                    {t === "signin" ? "Sign in" : "Sign up"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                {tab === "signup" && (
+                  <div className="space-y-1">
+                    <label className="text-xs text-zinc-600 uppercase tracking-widest">Name</label>
+                    <input
+                      onChange={(e) => setName(e.target.value)}
+                      type="text"
+                      placeholder="John Doe"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-lime-400/50 transition-colors"
+                    />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-600 uppercase tracking-widest">Email</label>
+                  <input
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="you@example.com"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-lime-400/50 transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-600 uppercase tracking-widest">Password</label>
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-lime-400/50 transition-colors"
+                  />
+                </div>
+
+                {tab === 'signin' && (<button onClick={handleSingIn} className="w-full bg-lime-400 text-zinc-950 text-sm font-semibold py-2.5 rounded-md hover:bg-lime-300 transition-all mt-2">
+                  Sign in →
+                </button>)}
+                {tab === 'signup' && (<button onClick={handleSignUp} className="w-full bg-lime-400 text-zinc-950 text-sm font-semibold py-2.5 rounded-md hover:bg-lime-300 transition-all mt-2">
+                  Create account
+                </button>)}
+
+                <p className="text-center text-xs text-zinc-700 pt-1">
+                  {tab === "signin" ? "Don't have an account? " : "Already have an account? "}
+                  <button onClick={() => setTab(tab === "signin" ? "signup" : "signin")} className="text-lime-400 hover:underline">
+                    {tab === "signin" ? "Sign up" : "Sign in"}
+                  </button>
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+      </div>
+      {/*       <div className="min-h-screen bg-neutral-900 flex items-center justify-center p-6">
+        <div className="w-full max-w-5xl bg-neutral-800 rounded-2xl shadow-xl grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
           <div className="p-10 flex flex-col justify-center bg-neutral-800">
 
             <div className="mb-8">
@@ -109,8 +232,6 @@ const Page = () => {
             </div>
 
           </div>
-
-          {/* RIGHT SIDE */}
           <div className="bg-neutral-700  items-center justify-center hidden sm:flex">
 
             <div className="text-neutral-300 text-center p-10">
@@ -125,7 +246,7 @@ const Page = () => {
 
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   )
 }

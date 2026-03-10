@@ -3,7 +3,7 @@ import becrypt from 'bcryptjs';
 import User from '../lib/db/models/User.model';
 import { revalidatePath } from 'next/cache';
 import { connectToDatabase } from '../lib/db/mongo';
-export const registerHandler = async (name: string ,email: string, password: string) => {
+export const signUpHandler = async (name: string ,email: string, password: string) => {
     try {
         const hashedPassword = await becrypt.hash(password, 10);
         await connectToDatabase()

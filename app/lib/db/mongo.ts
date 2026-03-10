@@ -1,16 +1,17 @@
 import mongoose from 'mongoose';
-export const connectToDatabase = async () => {
-    const uri = `${process.env.MONGO_URI}/${process.env.MONGO_DB}?${process.env.MONGO_CONFIG}`;
-    await mongoose.connect(uri);
-    mongoose.connection.on('connected', () => {
-        console.log('Mongoose connected to database');
-    });
-    mongoose.connection.on('error', (err) => {
-        console.log('Mongoose connection error:', err);
-        disconnectFromDatabase();
-    });
-}
+// ✅ Fix — cache the connection promise
+let cached = (global as any).mongoose || { conn: null, promise: null };
 
-const disconnectFromDatabase = async () => {
-    await mongoose.disconnect();
-}
+export const connectToDatabase = async () => {
+  const uri = process.env.MONGO_URI;
+  if (!uri) throw new Error("MONGODB_URI is not defined in environment variables");
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    const uri = `${process.env.MONGO_URI}`;
+    cached.promise = mongoose.connect(uri).then((m) => m);
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+};

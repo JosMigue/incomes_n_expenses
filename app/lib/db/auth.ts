@@ -1,18 +1,20 @@
 import NextAuth from "next-auth"
-import {connectToDatabase} from "@/app/lib/db/mongo";
+import { connectToDatabase } from "@/app/lib/db/mongo";
 import CredentialsProvider from "next-auth/providers/credentials";
 import User from "./models/User.model";
 import bcrypt from "bcryptjs";
 
-export const  { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
-      credentials: {},
-
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
         const { email, password } = credentials as { email: string; password: string };
-        try{
+        try {
           await connectToDatabase();
           const user = await User.findOne({ email });
           if (!user) {
@@ -22,9 +24,14 @@ export const  { handlers, auth, signIn, signOut } = NextAuth({
           if (!match) {
             return null;
           }
-          return user;
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+          };
         } catch (error) {
           console.error("Error occurred while authorizing user:", error);
+          return null;
         }
       }
     })
