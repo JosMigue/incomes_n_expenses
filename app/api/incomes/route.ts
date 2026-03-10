@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Income from '@/app/db/models/Income';
+import Income from '@/app/lib/db/models/Income';
 import { connectToDatabase } from '@/app/lib/db/mongo';
 
 export const GET = async (request: NextRequest) => {
